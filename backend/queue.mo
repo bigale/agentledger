@@ -11,6 +11,7 @@ import Debug "mo:base/Debug";
 import Float "mo:base/Float";
 import Cycles "mo:base/ExperimentalCycles";
 import Int "mo:base/Int";
+import Bool "mo:base/Bool";
 import AdminSystem "auth-single-user/management";
 import Principal "mo:base/Principal";
 
@@ -175,7 +176,7 @@ persistent actor QueueCanister {
     };
 
     // Configuration for cache canister communication
-    private let CACHE_CANISTER_ID = "rdmx6-jaaaa-aaaaa-aaadq-cai"; // Default local canister ID
+    private var CACHE_CANISTER_ID = "rdmx6-jaaaa-aaaaa-aaadq-cai"; // Default local canister ID
     private let INTER_CANISTER_CALL_TIMEOUT_NS : Nat64 = 30_000_000_000; // 30 seconds in nanoseconds
     private let MAX_RETRY_ATTEMPTS : Nat = 3;
 
@@ -394,7 +395,7 @@ persistent actor QueueCanister {
                 };
             };
         } catch (error) {
-            let errorMessage = "Inter-canister call failed: " # debug_show(error);
+            let errorMessage = "Inter-canister call failed";
             logInterCanisterCall(operation, false, ?errorMessage);
             
             // Implement retry logic for failed calls
@@ -430,7 +431,7 @@ persistent actor QueueCanister {
         
         // Check memory usage periodically
         if (operationCount % MEMORY_CHECK_INTERVAL == 0) {
-            let currentMemory = Cycles.memorySize();
+            let currentMemory = 0; // TODO: Use proper memory monitoring
             if (currentMemory > maxMemoryUsageBytes) {
                 return (false, ?"Memory usage limit exceeded");
             };
@@ -587,9 +588,9 @@ persistent actor QueueCanister {
         var selectedOperations : [OperationMetadata] = [];
         var count = 0;
         
-        for ((position, metadata) in sortedEntries.vals()) {
+        label batchLoop for ((position, metadata) in sortedEntries.vals()) {
             if (count >= safeBatchSize) {
-                break; // Respect batch size limit
+                break batchLoop; // Respect batch size limit
             };
             
             // Only select operations with "Queued" status that are not already being processed
@@ -671,7 +672,7 @@ persistent actor QueueCanister {
     public func processQueue(batchSize : Nat) : async ProcessQueueResult {
         let startTime = Time.now();
         let initialCycles = Cycles.balance();
-        let initialMemory = Cycles.memorySize();
+        let initialMemory = 0; // TODO: Use proper memory monitoring
 
         // Increment batch processing counter
         totalBatchesProcessed += 1;
@@ -739,7 +740,7 @@ persistent actor QueueCanister {
         var earlyTerminationReason : ?Text = null;
         var operationCount = 0;
 
-        for (metadata in operationsToProcess.vals()) {
+        label processLoop for (metadata in operationsToProcess.vals()) {
             operationCount += 1;
 
             // Subtask 5.9: Check batch processing safety conditions
@@ -749,7 +750,7 @@ persistent actor QueueCanister {
                 batchTerminatedEarly := true;
                 earlyTerminationReason := safetyReason;
                 totalEarlyTerminations += 1;
-                break;
+                break processLoop;
             };
 
             // Subtask 5.3: Safe atomic status update to processing with timestamp tracking
@@ -758,7 +759,7 @@ persistent actor QueueCanister {
             if (not statusUpdateSuccess) {
                 // Status update failed (likely due to concurrent processing), skip this operation
                 errors := Array.append(errors, [(metadata.id, "Concurrent processing detected, operation skipped")]);
-                continue;
+                continue processLoop;
             };
             
             // Subtask 5.4: Process the operation using real inter-canister calls
@@ -805,8 +806,8 @@ persistent actor QueueCanister {
         } else {
             0; // Handle potential overflow
         };
-        let memoryUsed = if (Cycles.memorySize() >= initialMemory) {
-            Cycles.memorySize() - initialMemory;
+        let memoryUsed = if (0 >= initialMemory) {
+            0 - initialMemory;
         } else {
             0; // Handle potential underflow
         };
@@ -850,7 +851,7 @@ persistent actor QueueCanister {
     public query func performHealthCheck() : async QueueHealthReport {
         let now = Time.now();
         let currentCycles = Cycles.balance();
-        let currentMemory = Cycles.memorySize();
+        let currentMemory = 0; // TODO: Use proper memory monitoring
         let processingRate = calculateProcessingRate();
         let errorRate = calculateErrorRate();
         let avgProcessingTime = calculateAverageProcessingTime();
@@ -973,7 +974,7 @@ persistent actor QueueCanister {
         };
 
         let startTime = Time.now();
-        let initialMemory = Cycles.memorySize();
+        let initialMemory = 0; // TODO: Use proper memory monitoring
         var itemsAffected = 0;
         var success = true;
         var message = "";
@@ -1111,8 +1112,8 @@ persistent actor QueueCanister {
 
         let endTime = Time.now();
         let executionTime = Nat64.toNat(Nat64.fromNat(Int.abs(endTime - startTime))) / 1_000_000; // Convert to milliseconds
-        let memoryFreed = if (initialMemory >= Cycles.memorySize()) {
-            initialMemory - Cycles.memorySize();
+        let memoryFreed = if (initialMemory >= 0) {
+            initialMemory - 0;
         } else {
             0;
         };
@@ -1481,9 +1482,9 @@ persistent actor QueueCanister {
             Debug.trap("Unauthorized: Only admin can configure cache canister");
         };
 
-        // In a production system, this would update the CACHE_CANISTER_ID
-        // For now, we'll just log the configuration attempt
-        Debug.print("Cache canister configuration requested: " # canisterId);
+        // Update the CACHE_CANISTER_ID with the provided canister ID
+        CACHE_CANISTER_ID := canisterId;
+        Debug.print("Cache canister configured: " # canisterId);
         true;
     };
 

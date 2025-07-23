@@ -37,11 +37,25 @@ persistent actor {
     var nodeEntries : OrderedMap.Map<NodeId, [Key]> = natMap.empty();
 
     let numNodes : Nat = 6;
+    
+    // Queue canister ID for inter-canister authorization
+    private var queueCanisterId : ?Principal = null;
 
     // Initialize node statuses and entries
     for (i in Iter.range(0, numNodes - 1)) {
         nodeStatuses := natMap.put(nodeStatuses, i, #Healthy);
         nodeEntries := natMap.put(nodeEntries, i, []);
+    };
+
+    // Helper function to check if caller is authorized (admin or queue canister)
+    func isAuthorizedCaller(caller : Principal) : Bool {
+        if (AdminSystem.isCurrentUserAdmin(adminState, caller)) {
+            return true;
+        };
+        switch (queueCanisterId) {
+            case (null) { false };
+            case (?queueId) { Principal.equal(caller, queueId) };
+        };
     };
 
     // Helper function to get healthy nodes
@@ -202,8 +216,8 @@ persistent actor {
 
     // Cache operations
     public shared ({ caller }) func set(key : Key, value : Value) : async Bool {
-        if (not (AdminSystem.isCurrentUserAdmin(adminState, caller))) {
-            Debug.trap("Unauthorized: Only admin can set cache entries");
+        if (not (isAuthorizedCaller(caller))) {
+            Debug.trap("Unauthorized: Only admin or queue canister can set cache entries");
         };
 
         let primaryNode = getNodeForKey(key);
@@ -231,8 +245,8 @@ persistent actor {
     };
 
     public query ({ caller }) func get(key : Key) : async ?Value {
-        if (not (AdminSystem.isCurrentUserAdmin(adminState, caller))) {
-            Debug.trap("Unauthorized: Only admin can get cache entries");
+        if (not (isAuthorizedCaller(caller))) {
+            Debug.trap("Unauthorized: Only admin or queue canister can get cache entries");
         };
 
         let entry = textMap.get(cache, key);
@@ -255,8 +269,8 @@ persistent actor {
     };
 
     public shared ({ caller }) func deleteEntry(key : Key) : async Bool {
-        if (not (AdminSystem.isCurrentUserAdmin(adminState, caller))) {
-            Debug.trap("Unauthorized: Only admin can delete cache entries");
+        if (not (isAuthorizedCaller(caller))) {
+            Debug.trap("Unauthorized: Only admin or queue canister can delete cache entries");
         };
 
         let entry = textMap.get(cache, key);
@@ -321,6 +335,13 @@ persistent actor {
     // Authentication functions
     public shared ({ caller }) func initializeAuth() : async () {
         AdminSystem.initializeAuth(adminState, caller);
+    };
+
+    public shared ({ caller }) func setQueueCanister(queueId : Principal) : async () {
+        if (not (AdminSystem.isCurrentUserAdmin(adminState, caller))) {
+            Debug.trap("Unauthorized: Only admin can set queue canister");
+        };
+        queueCanisterId := ?queueId;
     };
 
     public query ({ caller }) func isCurrentUserAdmin() : async Bool {
