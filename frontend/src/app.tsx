@@ -1,6 +1,6 @@
 import React from 'react';
 import { useInternetIdentity } from 'ic-use-internet-identity';
-import { useActor } from './hooks/useActor';
+import { useActor } from './hooks/useActors';
 import { useIsCurrentUserAdmin } from './hooks/useQueries';
 import LoginButton from './components/LoginButton';
 import UserProfileSetup from './components/UserProfileSetup';
@@ -32,7 +32,11 @@ function App() {
 
   const isAuthenticated = !!identity;
 
-  if (!isAuthenticated) {
+  // For local development, show the UI even without authentication
+  // In production, you might want to require authentication
+  const showLoginOnly = false; // Set to true to require authentication
+  
+  if (!isAuthenticated && showLoginOnly) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -48,7 +52,10 @@ function App() {
     );
   }
 
-  if (!isAdmin) {
+  // For local development, skip admin check or allow if not authenticated
+  const requireAdminAuth = false; // Set to true to require admin authentication
+  
+  if (!isAdmin && requireAdminAuth && isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center">

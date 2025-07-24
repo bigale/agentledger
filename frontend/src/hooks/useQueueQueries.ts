@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
+import { useActor } from './useActors';
 
 // Types for queue operations
 interface QueueOperation {

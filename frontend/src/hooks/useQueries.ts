@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
+import { useActor } from './useActors';
 import type { Key, Value, NodeId, CacheEntry, NodeStatus, UserProfile } from '../backend';
+import { nodeStatusFromVariant } from '../backend';
 
 export function useCacheState() {
   const { actor, isFetching } = useActor();
@@ -9,7 +10,12 @@ export function useCacheState() {
     queryKey: ['cacheState'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getCacheState();
+      try {
+        return actor.getCacheStateAnonymous();
+      } catch (error) {
+        console.warn('Failed to get cache state with anonymous method, trying authenticated method:', error);
+        return actor.getCacheState();
+      }
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 2000, // Refresh every 2 seconds for real-time updates
@@ -23,7 +29,14 @@ export function useNodeStatuses() {
     queryKey: ['nodeStatuses'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getNodeStatuses();
+      try {
+        const variantData = await actor.getNodeStatusesAnonymous();
+        return variantData.map(([nodeId, statusVariant]) => [nodeId, nodeStatusFromVariant(statusVariant)]);
+      } catch (error) {
+        console.warn('Failed to get node statuses with anonymous method, trying authenticated method:', error);
+        const variantData = await actor.getNodeStatuses();
+        return variantData.map(([nodeId, statusVariant]) => [nodeId, nodeStatusFromVariant(statusVariant)]);
+      }
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 1000, // Refresh every second for real-time health monitoring
@@ -37,7 +50,12 @@ export function useNodeEntries() {
     queryKey: ['nodeEntries'],
     queryFn: async () => {
       if (!actor) return [];
-      return actor.getNodeEntries();
+      try {
+        return actor.getNodeEntriesAnonymous();
+      } catch (error) {
+        console.warn('Failed to get node entries with anonymous method, trying authenticated method:', error);
+        return actor.getNodeEntries();
+      }
     },
     enabled: !!actor && !isFetching,
     refetchInterval: 2000,
@@ -51,7 +69,12 @@ export function useSetCache() {
   return useMutation({
     mutationFn: async ({ key, value }: { key: Key; value: Value }) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.set(key, value);
+      try {
+        return actor.setAnonymous(key, value);
+      } catch (error) {
+        console.warn('Failed to set cache with anonymous method, trying authenticated method:', error);
+        return actor.set(key, value);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cacheState'] });
@@ -66,7 +89,12 @@ export function useGetCache() {
   return useMutation({
     mutationFn: async (key: Key) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.get(key);
+      try {
+        return actor.getAnonymous(key);
+      } catch (error) {
+        console.warn('Failed to get cache with anonymous method, trying authenticated method:', error);
+        return actor.get(key);
+      }
     },
   });
 }
@@ -78,7 +106,12 @@ export function useDeleteCache() {
   return useMutation({
     mutationFn: async (key: Key) => {
       if (!actor) throw new Error('Actor not available');
-      return actor.deleteEntry(key);
+      try {
+        return actor.deleteEntryAnonymous(key);
+      } catch (error) {
+        console.warn('Failed to delete cache with anonymous method, trying authenticated method:', error);
+        return actor.deleteEntry(key);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cacheState'] });

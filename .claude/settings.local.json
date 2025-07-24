@@ -15,7 +15,16 @@
       "NotebookEdit(*)",
       "WebFetch(*)",
       "WebSearch(*)",
-      "ExitPlanMode(*)"
+      "ExitPlanMode(*)",
+      "Bash(npx tsc:*)",
+      "Bash(mv:*)",
+      "Bash(npx:*)",
+      "Bash(chmod:*)",
+      "Bash(node:*)",
+      "Bash(rm:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(killall:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

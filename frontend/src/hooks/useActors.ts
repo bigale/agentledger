@@ -13,25 +13,37 @@ export function useActor() {
         queryFn: async () => {
             const isAuthenticated = !!identity;
 
-            if (!isAuthenticated) {
-                // Return anonymous actor if not authenticated
-                return await createActor();
-            }
-
-            const actorOptions = {
-                agentOptions: {
-                    identity
+            try {
+                if (!isAuthenticated) {
+                    // Return anonymous actor if not authenticated
+                    return await createActor();
                 }
-            };
 
-            const actor = await createActor(actorOptions);
-            await actor.initializeAuth();
-            return actor;
+                const actorOptions = {
+                    agentOptions: {
+                        identity
+                    }
+                };
+
+                const actor = await createActor(actorOptions);
+                // Only call initializeAuth if we have an identity
+                try {
+                    await actor.initializeAuth();
+                } catch (error) {
+                    console.warn('Failed to initialize auth:', error);
+                }
+                return actor;
+            } catch (error) {
+                console.error('Failed to create actor:', error);
+                throw error;
+            }
         },
         // Only refetch when identity changes
         staleTime: Infinity,
         // This will cause the actor to be recreated when the identity changes
-        enabled: true
+        enabled: true,
+        retry: 3,
+        retryDelay: 1000,
     });
 
     // When the actor changes, invalidate dependent queries

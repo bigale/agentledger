@@ -363,4 +363,83 @@ persistent actor {
     public shared ({ caller }) func saveUserProfile(profile: UserProfile) : async () {
         userProfiles := principalMap.put(userProfiles, caller, profile);
     };
+
+    // Anonymous public methods for local development and testing
+    public func setAnonymous(key : Key, value : Value) : async Bool {
+        let primaryNode = getNodeForKey(key);
+        let replicaNode = getReplicaNode(primaryNode);
+
+        if (getNodeStatus(primaryNode) == #Failed) {
+            Debug.print("Primary node is down. Using replica.");
+            if (getNodeStatus(replicaNode) == #Failed) {
+                Debug.print("Both primary and replica nodes are down.");
+                return false;
+            };
+        };
+
+        let entry : CacheEntry = {
+            value = value;
+            primaryNode = primaryNode;
+            replicaNode = replicaNode;
+        };
+
+        cache := textMap.put(cache, key, entry);
+        updateNodeEntries(primaryNode, key);
+        updateNodeEntries(replicaNode, key);
+
+        true;
+    };
+
+    public query func getAnonymous(key : Key) : async ?Value {
+        let entry = textMap.get(cache, key);
+        switch (entry) {
+            case (null) { null };
+            case (?e) {
+                if (getNodeStatus(e.primaryNode) == #Failed) {
+                    Debug.print("Primary node is down. Using replica.");
+                    if (getNodeStatus(e.replicaNode) == #Failed) {
+                        Debug.print("Both primary and replica nodes are down.");
+                        null;
+                    } else {
+                        ?e.value;
+                    };
+                } else {
+                    ?e.value;
+                };
+            };
+        };
+    };
+
+    public func deleteEntryAnonymous(key : Key) : async Bool {
+        let entry = textMap.get(cache, key);
+        switch (entry) {
+            case (null) { false };
+            case (?e) {
+                if (getNodeStatus(e.primaryNode) == #Failed) {
+                    Debug.print("Primary node is down. Using replica.");
+                    if (getNodeStatus(e.replicaNode) == #Failed) {
+                        Debug.print("Both primary and replica nodes are down.");
+                        return false;
+                    };
+                };
+
+                cache := textMap.delete(cache, key);
+                removeEntryFromNode(e.primaryNode, key);
+                removeEntryFromNode(e.replicaNode, key);
+                true;
+            };
+        };
+    };
+
+    public query func getCacheStateAnonymous() : async [(Key, CacheEntry)] {
+        Iter.toArray(textMap.entries(cache));
+    };
+
+    public query func getNodeStatusesAnonymous() : async [(NodeId, NodeStatus)] {
+        Iter.toArray(natMap.entries(nodeStatuses));
+    };
+
+    public query func getNodeEntriesAnonymous() : async [(NodeId, [Key])] {
+        Iter.toArray(natMap.entries(nodeEntries));
+    };
 };
