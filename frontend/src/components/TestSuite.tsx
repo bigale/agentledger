@@ -84,9 +84,9 @@ const TestSuite: React.FC = () => {
     setIsRunning(true);
     
     const tests: TestResult[] = [
-      { name: 'Set Cache Entry', status: 'pending' },
-      { name: 'Get Cache Entry', status: 'pending' },
-      { name: 'Delete Cache Entry', status: 'pending' },
+      { name: 'Set Cache Entry [FIXED]', status: 'pending' },
+      { name: 'Get Cache Entry [FIXED]', status: 'pending' },
+      { name: 'Delete Cache Entry [FIXED]', status: 'pending' },
       { name: 'Simulate Node Failure', status: 'pending' },
       { name: 'Simulate Node Recovery', status: 'pending' },
       { name: 'Cache Operations During Failure', status: 'pending' },
@@ -97,13 +97,28 @@ const TestSuite: React.FC = () => {
     setTestResults(tests);
 
     try {
+      // Create unique test keys to avoid conflicts with existing cache data
+      const timestamp = Date.now();
+      const testKey = `test-key-${timestamp}`;
+      const testValue = `test-value-${timestamp}`;
+
+      // Clear any existing test keys first
+      try {
+        await deleteMutation.mutateAsync('test-key-1');
+        await deleteMutation.mutateAsync(testKey);
+      } catch (error) {
+        // Ignore errors if keys don't exist
+      }
+
+      await sleep(200);
+
       // Test 1: Set Cache Entry
       updateTestResult(0, { status: 'running' });
       const startTime1 = Date.now();
       try {
         const setResult = await setMutation.mutateAsync({ 
-          key: 'test-key-1', 
-          value: 'test-value-1' 
+          key: testKey, 
+          value: testValue 
         });
         const duration1 = Date.now() - startTime1;
         
@@ -134,10 +149,12 @@ const TestSuite: React.FC = () => {
       updateTestResult(1, { status: 'running' });
       const startTime2 = Date.now();
       try {
-        const getResult = await getMutation.mutateAsync('test-key-1');
+        const getResult = await getMutation.mutateAsync(testKey);
         const duration2 = Date.now() - startTime2;
         
-        if (getResult === 'test-value-1') {
+        console.log(`Cache test debug: testKey='${testKey}', testValue='${testValue}', getResult='${getResult}'`);
+        
+        if (getResult === testValue) {
           updateTestResult(1, { 
             status: 'passed', 
             message: 'Successfully retrieved correct value',
@@ -146,7 +163,7 @@ const TestSuite: React.FC = () => {
         } else {
           updateTestResult(1, { 
             status: 'failed', 
-            message: `Expected 'test-value-1', got '${getResult}'`,
+            message: `Value mismatch: exp=${testValue.slice(-8)} got=${getResult?.slice(-8) || 'null'}`,
             duration: duration2
           });
         }
@@ -164,7 +181,7 @@ const TestSuite: React.FC = () => {
       updateTestResult(2, { status: 'running' });
       const startTime3 = Date.now();
       try {
-        const deleteResult = await deleteMutation.mutateAsync('test-key-1');
+        const deleteResult = await deleteMutation.mutateAsync(testKey);
         const duration3 = Date.now() - startTime3;
         
         if (deleteResult) {
