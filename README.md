@@ -232,3 +232,5 @@ npm run typecheck # Check TypeScript types
 ---
 
 Built with ❤️ on the Internet Computer
+<img width="1272" height="13263" alt="agentledger-test" src="https://github.com/user-attachments/assets/4bfd7e2c-0611-4a4f-bb58-c0169c89dfcb" />
+
