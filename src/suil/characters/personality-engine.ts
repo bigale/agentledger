@@ -327,9 +327,19 @@ export class PersonalityEngine {
     };
     
     // Select route with highest score
-    return Object.entries(scores).reduce((best, [route, score]) => 
-      score > scores[best] ? route as ProcessingRoute : best
-    , ProcessingRoute.SPECIALIZED);
+    let bestRoute = ProcessingRoute.SPECIALIZED;
+    let bestScore = scores[ProcessingRoute.SPECIALIZED];
+    
+    if (scores[ProcessingRoute.HYBRID] > bestScore) {
+      bestRoute = ProcessingRoute.HYBRID;
+      bestScore = scores[ProcessingRoute.HYBRID];
+    }
+    
+    if (scores[ProcessingRoute.LLM] > bestScore) {
+      bestRoute = ProcessingRoute.LLM;
+    }
+    
+    return bestRoute;
   }
 
   /**

@@ -18,9 +18,10 @@ export interface Task {
 
 export interface TaskContext {
   project: 'agentledger' | 'icpxmldb' | 'sitebud' | 'icport';
-  domain: string;
+  domain?: string;
   patterns?: string[];
   history?: TaskResult[];
+  personalityInfluence?: any;
 }
 
 export interface TaskResult {
@@ -30,6 +31,9 @@ export interface TaskResult {
   route: ProcessingRoute;
   confidence: number;
   character?: CharacterPersonality;
+  personalityFormatting?: any;
+  formattedResult?: any;
+  error?: string;
 }
 
 export enum TaskType {
@@ -128,9 +132,9 @@ export class SUILEngine {
           this.performanceMetrics.llmCount++;
           break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Task ${task.id} failed:`, error);
-      result = { error: error.message };
+      result = { error: error?.message || 'Unknown error' };
     }
 
     const processingTime = performance.now() - startTime;
@@ -181,7 +185,7 @@ export class SUILEngine {
 
   private isHybridCandidate(task: Task): boolean {
     // Tasks that benefit from pattern recognition + LLM enhancement
-    return task.context?.patterns && task.context.patterns.length > 0;
+    return !!(task.context?.patterns && task.context.patterns.length > 0);
   }
 
   private async processSpecialized(task: Task): Promise<any> {

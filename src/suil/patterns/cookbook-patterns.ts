@@ -531,7 +531,7 @@ export class PatternRegistry {
         
         // Apply character-specific adaptations
         const character = input.character || CharacterPersonality.MAKOTO;
-        const adaptation = pattern.characterAdaptations[character];
+        const adaptation = pattern.characterAdaptations[character as keyof typeof pattern.characterAdaptations] || 'Default processing';
         
         // Simulate specialized processing based on pattern strategy
         const result = await this.executePatternStrategy(pattern, input, adaptation);
