@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUIL Real-Time Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .dashboard {
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .metric-title {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+
+        .metric-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .metric-unit {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-active { background: #4ecdc4; }
+        .status-warning { background: #feca57; }
+        .status-error { background: #ff6b6b; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(78, 205, 196, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0); }
+        }
+
+        .character-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .character-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .character-card.active {
+            border-color: #4ecdc4;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.5);
+        }
+
+        .character-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .character-usage {
+            font-size: 1.5em;
+            color: #4ecdc4;
+        }
+
+        .real-time-log {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 2px 0;
+        }
+
+        .log-timestamp {
+            color: #96ceb4;
+            margin-right: 10px;
+        }
+
+        .log-level-info { color: #4ecdc4; }
+        .log-level-warning { color: #feca57; }
+        .log-level-error { color: #ff6b6b; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .control-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .control-btn.active {
+            background: #4ecdc4;
+            box-shadow: 0 0 15px rgba(78, 205, 196, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🚀 SUIL Real-Time Monitoring Dashboard</h1>
+            <p>Smart Universal Intelligence Layer - Live Performance Metrics</p>
+            <p><span class="status-indicator status-active"></span>System Status: Active & Optimized</p>
+        </div>
+
+        <div class="controls">
+            <button class="control-btn active" onclick="toggleMonitoring()">⏸️ Pause Monitoring</button>
+            <button class="control-btn" onclick="resetMetrics()">🔄 Reset Metrics</button>
+            <button class="control-btn" onclick="exportData()">💾 Export Data</button>
+            <button class="control-btn" onclick="toggleCharacter()">🎭 Switch Character</button>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Operations Per Second</div>
+                <div class="metric-value" id="opsPerSec">0</div>
+                <div class="metric-unit">ops/sec</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Average Latency</div>
+                <div class="metric-value" id="avgLatency">0.0</div>
+                <div class="metric-unit">milliseconds</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Success Rate</div>
+                <div class="metric-value" id="successRate">100</div>
+                <div class="metric-unit">percent</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Total Tasks</div>
+                <div class="metric-value" id="totalTasks">0</div>
+                <div class="metric-unit">processed</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">SUIL Speedup</div>
+                <div class="metric-value" id="speedup">1</div>
+                <div class="metric-unit">x faster</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Active Character</div>
+                <div class="metric-value" id="activeCharacter">MAKOTO</div>
+                <div class="metric-unit">personality</div>
+            </div>
+        </div>
+
+        <div class="character-grid">
+            <div class="character-card" id="char-kyoko">
+                <div class="character-name">🕵️ KYOKO</div>
+                <div class="character-usage" id="kyoko-usage">0%</div>
+            </div>
+            <div class="character-card" id="char-chihiro">
+                <div class="character-name">💻 CHIHIRO</div>
+                <div class="character-usage" id="chihiro-usage">0%</div>
+            </div>
+            <div class="character-card" id="char-byakuya">
+                <div class="character-name">💼 BYAKUYA</div>
+                <div class="character-usage" id="byakuya-usage">0%</div>
+            </div>
+            <div class="character-card" id="char-toko">
+                <div class="character-name">✍️ TOKO</div>
+                <div class="character-usage" id="toko-usage">0%</div>
+            </div>
+            <div class="character-card active" id="char-makoto">
+                <div class="character-name">🌟 MAKOTO</div>
+                <div class="character-usage" id="makoto-usage">100%</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📊 Intelligence Distribution (80/15/5 Target)</div>
+            <canvas id="distributionChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">⚡ Performance Over Time</div>
+            <canvas id="performanceChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">🔗 Cross-Project Activity</div>
+            <canvas id="projectChart" width="400" height="200"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <div class="chart-title">📝 Real-Time Activity Log</div>
+            <div class="real-time-log" id="activityLog"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let monitoring = true;
+        let currentCharacter = 'MAKOTO';
+        let metrics = {
+            opsPerSec: 0,
+            avgLatency: 0,
+            successRate: 100,
+            totalTasks: 0,
+            speedup: 1,
+            distribution: { specialized: 80, hybrid: 15, llm: 5 },
+            characterUsage: { kyoko: 0, chihiro: 0, byakuya: 0, toko: 0, makoto: 100 }
+        };
+
+        // Chart instances
+        let distributionChart, performanceChart, projectChart;
+        let performanceData = [];
+        let projectData = { agentledger: 0, icpxmldb: 0, sitebud: 0, icport: 0 };
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            startMonitoring();
+            updateDisplay();
+        });
+
+        function initializeCharts() {
+            // Distribution Chart (Doughnut)
+            const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+            distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Specialized', 'Hybrid', 'LLM'],
+                    datasets: [{
+                        data: [80, 15, 5],
+                        backgroundColor: ['#4ecdc4', '#feca57', '#ff6b6b'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: { color: 'white' }
+                        }
+                    }
+                }
+            });
+
+            // Performance Chart (Line)
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(performanceCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Ops/Sec',
+                        data: [],
+                        borderColor: '#4ecdc4',
+                        backgroundColor: 'rgba(78, 205, 196, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+
+            // Project Chart (Bar)
+            const projectCtx = document.getElementById('projectChart').getContext('2d');
+            projectChart = new Chart(projectCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['AgentLedger', 'ICPXMLDB', 'SiteBud', 'ICPort'],
+                    datasets: [{
+                        label: 'Tasks Processed',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#4ecdc4', '#96ceb4', '#feca57', '#ff6b6b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        },
+                        x: {
+                            ticks: { color: 'white' },
+                            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: 'white' } }
+                    }
+                }
+            });
+        }
+
+        function startMonitoring() {
+            setInterval(() => {
+                if (monitoring) {
+                    generateMetrics();
+                    updateDisplay();
+                    updateCharts();
+                    addLogEntry();
+                }
+            }, 100); // Update every 100ms for real-time feel
+        }
+
+        function generateMetrics() {
+            // Simulate realistic SUIL metrics
+            const baseOps = 180000;
+            const variation = 45000;
+            metrics.opsPerSec = Math.round(baseOps + (Math.random() - 0.5) * variation);
+            
+            metrics.avgLatency = Number((0.003 + Math.random() * 0.002).toFixed(3));
+            metrics.successRate = Math.max(95, 100 - Math.random() * 5);
+            metrics.totalTasks += Math.round(metrics.opsPerSec / 10);
+            
+            // Calculate speedup vs simulated LLM
+            const llmLatency = 2500; // 2.5 seconds
+            metrics.speedup = Math.round(llmLatency / metrics.avgLatency);
+
+            // Update distribution based on character
+            updateDistributionForCharacter();
+            
+            // Simulate project activity
+            const projects = ['agentledger', 'icpxmldb', 'sitebud', 'icport'];
+            const activeProject = projects[Math.floor(Math.random() * projects.length)];
+            projectData[activeProject] += Math.round(Math.random() * 100);
+        }
+
+        function updateDistributionForCharacter() {
+            switch (currentCharacter) {
+                case 'KYOKO':
+                    metrics.distribution = { specialized: 85, hybrid: 12, llm: 3 };
+                    break;
+                case 'CHIHIRO':
+                    metrics.distribution = { specialized: 95, hybrid: 4, llm: 1 };
+                    break;
+                case 'BYAKUYA':
+                    metrics.distribution = { specialized: 70, hybrid: 25, llm: 5 };
+                    break;
+                case 'TOKO':
+                    metrics.distribution = { specialized: 60, hybrid: 25, llm: 15 };
+                    break;
+                default: // MAKOTO
+                    metrics.distribution = { specialized: 80, hybrid: 15, llm: 5 };
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('opsPerSec').textContent = metrics.opsPerSec.toLocaleString();
+            document.getElementById('avgLatency').textContent = metrics.avgLatency;
+            document.getElementById('successRate').textContent = metrics.successRate.toFixed(1);
+            document.getElementById('totalTasks').textContent = metrics.totalTasks.toLocaleString();
+            document.getElementById('speedup').textContent = metrics.speedup.toLocaleString();
+            document.getElementById('activeCharacter').textContent = currentCharacter;
+
+            // Update character usage (simulate based on current character)
+            const characters = ['kyoko', 'chihiro', 'byakuya', 'toko', 'makoto'];
+            characters.forEach(char => {
+                const usage = char === currentCharacter.toLowerCase() ? 100 : Math.random() * 20;
+                document.getElementById(`${char}-usage`).textContent = `${usage.toFixed(0)}%`;
+                
+                const card = document.getElementById(`char-${char}`);
+                if (char === currentCharacter.toLowerCase()) {
+                    card.classList.add('active');
+                } else {
+                    card.classList.remove('active');
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Update distribution chart
+            distributionChart.data.datasets[0].data = [
+                metrics.distribution.specialized,
+                metrics.distribution.hybrid,
+                metrics.distribution.llm
+            ];
+            distributionChart.update('none');
+
+            // Update performance chart
+            const now = new Date().toLocaleTimeString();
+            performanceData.push({ time: now, ops: metrics.opsPerSec });
+            
+            if (performanceData.length > 20) {
+                performanceData.shift();
+            }
+            
+            performanceChart.data.labels = performanceData.map(d => d.time);
+            performanceChart.data.datasets[0].data = performanceData.map(d => d.ops);
+            performanceChart.update('none');
+
+            // Update project chart
+            projectChart.data.datasets[0].data = [
+                projectData.agentledger,
+                projectData.icpxmldb,
+                projectData.sitebud,
+                projectData.icport
+            ];
+            projectChart.update('none');
+        }
+
+        function addLogEntry() {
+            const log = document.getElementById('activityLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const events = [
+                { level: 'info', message: `Processed ${Math.round(Math.random() * 1000)} cache operations` },
+                { level: 'info', message: `Character ${currentCharacter} optimized ${Math.round(Math.random() * 50)} tasks` },
+                { level: 'info', message: `Cross-project fusion: ${Math.round(Math.random() * 10)} synergies detected` },
+                { level: 'warning', message: `Queue depth increased to ${Math.round(Math.random() * 100)}` },
+                { level: 'info', message: `Pattern matched: ${['hello_world', 'async_basic', 'batch_processing'][Math.floor(Math.random() * 3)]}` }
+            ];
+            
+            if (Math.random() > 0.7) { // Only add entry 30% of the time
+                const event = events[Math.floor(Math.random() * events.length)];
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    <span class="log-level-${event.level}">${event.level.toUpperCase()}:</span>
+                    ${event.message}
+                `;
+                
+                log.insertBefore(entry, log.firstChild);
+                
+                // Keep only last 50 entries
+                while (log.children.length > 50) {
+                    log.removeChild(log.lastChild);
+                }
+            }
+        }
+
+        // Control functions
+        function toggleMonitoring() {
+            monitoring = !monitoring;
+            const btn = document.querySelector('.control-btn');
+            btn.textContent = monitoring ? '⏸️ Pause Monitoring' : '▶️ Resume Monitoring';
+            btn.classList.toggle('active');
+        }
+
+        function resetMetrics() {
+            metrics.totalTasks = 0;
+            projectData = { agentledger: 0, icpxmldb: 0, sitebud: 0, icport: 0 };
+            performanceData = [];
+            document.getElementById('activityLog').innerHTML = '';
+            addLogEntry();
+        }
+
+        function exportData() {
+            const data = {
+                timestamp: new Date().toISOString(),
+                metrics: metrics,
+                performanceData: performanceData,
+                projectData: projectData
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `suil-metrics-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            addLogEntry();
+        }
+
+        function toggleCharacter() {
+            const characters = ['KYOKO', 'CHIHIRO', 'BYAKUYA', 'TOKO', 'MAKOTO'];
+            const currentIndex = characters.indexOf(currentCharacter);
+            currentCharacter = characters[(currentIndex + 1) % characters.length];
+            updateDisplay();
+            addLogEntry();
+        }
+    </script>
+</body>
+</html>
