@@ -13,7 +13,13 @@
     "test:browser:headless": "node test-browser-headless.js",
     "test:network": "node test-network-monitor.js",
     "test:signature": "node test-signature-fix.js",
-    "test:run-tests": "node test-run-tests.js"
+    "test:run-tests": "node test-run-tests.js",
+    "test:direct": "node wip/test-standard-direct.js",
+    "test:direct:verbose": "node wip/test-standard-direct.js --verbose",
+    "test:direct:auth": "node wip/test-standard-direct-auth.js --auth",
+    "test:direct:anonymous": "node wip/test-standard-direct-auth.js --anonymous-only",
+    "test:direct:auth:verbose": "node wip/test-standard-direct-auth.js --auth --verbose",
+    "test:direct:json": "node wip/test-standard-direct-auth.js --auth --json"
   },
   "dependencies": {
     "@dfinity/agent": "^0.19.3",
