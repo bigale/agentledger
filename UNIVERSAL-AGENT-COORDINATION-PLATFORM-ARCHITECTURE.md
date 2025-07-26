@@ -87,64 +87,127 @@ graph LR
 
 ```mermaid
 graph TB
-    subgraph "AgentLedger Integration"
-        AL[AgentLedger Core]
-        ER[Event Router]
-        OC[Orchestrator Canister]
-        AR[Agent Registry]
+    subgraph "Foundation Kit Integration"
+        subgraph "agentledger-core-kit"
+            CACHE[Distributed Cache<br/>6-node replication]
+            QUEUE[FIFO Queue<br/>Retry logic]
+            CACHE <--> QUEUE
+        end
         
-        AL --> ER
-        ER --> OC
-        OC --> AR
+        subgraph "agentledger-events-kit"
+            ER[Event Router<br/>Pub-sub messaging]
+            ET[Event Types<br/>Schema definitions]
+            ER --> ET
+        end
         
-        SUIL1[SUIL Programs] --> AL
-        SUIL1 --> |Cache Patterns| ER
-        SUIL1 --> |Queue Routing| OC
+        subgraph "agentledger-registry-kit"
+            AR[Agent Registry<br/>Capability management]
+            AC[Agent Cards<br/>Capability definitions]
+            AR --> AC
+        end
+    end
+    
+    subgraph "Intelligence Kit Integration"
+        subgraph "agentledger-suil-kit"
+            SUIL[SUIL Engine]
+            CHAR[Character System]
+            PATTERNS[Cache Patterns]
+            ROUTING[Queue Routing]
+            MATCHING[Agent Matching]
+            
+            SUIL --> CHAR
+            SUIL --> PATTERNS
+            SUIL --> ROUTING  
+            SUIL --> MATCHING
+        end
+        
+        subgraph "agentledger-mesh-kit"
+            ALM[ALM Coordinator]
+            TASK[Task Delegation]
+            WORK[Workflow Engine]
+            SAM[SAM Adapter]
+            
+            ALM --> TASK
+            ALM --> WORK
+            ALM --> SAM
+        end
+    end
+    
+    subgraph "Application Kit Integration"
+        subgraph "agentledger-chrome-kit"
+            EXT[Chrome Extension]
+            BRIDGE[ICP Connector]
+            EXT --> BRIDGE
+        end
+        
+        subgraph "agentledger-dashboard-kit"
+            DASH[React Dashboard]
+            METRICS[Performance Metrics]
+            DASH --> METRICS
+        end
+    end
+    
+    subgraph "SiteBud Independent Ecosystem"
+        subgraph "sitebud-core-kit"
+            STEM[SiteBud Stem<br/>Module System]
+        end
+        
+        subgraph "sitebud-dev-kit"
+            GROVE[SiteBud Grove<br/>Development IDE]
+        end
+        
+        subgraph "sitebud-marketplace-kit"
+            GARDEN[SiteBud Garden<br/>Marketplace]
+        end
+        
+        subgraph "sitebud-extension-kit"
+            FRAMEWORK[Extension Frameworks]
+        end
     end
     
     subgraph "ICPXMLDB Integration"
         AIK[AI Construction Kit]
         USF[Universal Schema Framework]
         PF[PocketFlow TypeScript]
-        CDV[Character Development]
+        IP[ICPort Kit Registry]
         
         AIK --> USF
         USF --> PF
-        PF --> CDV
-        
-        SUIL2[SUIL Intelligence] --> AIK
-        SUIL2 --> |Pattern Generation| USF
-        SUIL2 --> |Workflow Orchestration| PF
+        PF --> IP
     end
     
-    subgraph "SiteBud Integration"
-        HTM[HTMZ Framework]
-        EHS[Embedded HTTP Server]
-        ULT[Universal Language Tutor]
-        DOM[DOM Control]
-        
-        HTM --> EHS
-        EHS --> ULT
-        ULT --> DOM
-        
-        SUIL3[SUIL Patterns] --> HTM
-        SUIL3 --> |Translation Cache| ULT
-        SUIL3 --> |Response Templates| EHS
-    end
+    %% Foundation dependencies
+    ER --> CACHE
+    AR --> ER
     
-    subgraph "ICPort Integration"
-        DFI[Docker for ICP]
-        KR[Kit Registry]
-        HAB[HAAF Automation Bay]
-        QAC[QA-as-Code]
-        
-        DFI --> KR
-        KR --> HAB
-        HAB --> QAC
-        
-        SUIL4[SUIL Orchestration] --> DFI
-        SUIL4 --> |Deployment Patterns| KR
-        SUIL4 --> |Test Generation| HAB
+    %% Intelligence dependencies
+    SUIL --> AR
+    ALM --> ER
+    ALM --> CACHE
+    
+    %% Application dependencies
+    BRIDGE --> CACHE
+    BRIDGE --> ALM
+    METRICS --> ER
+    METRICS --> SUIL
+    
+    %% SiteBud is independent - NO cross-dependencies
+    
+    %% ICPXMLDB provides kit infrastructure
+    IP --> ALM
+    PF --> SUIL
+    
+    classDef foundation fill:#e1f5fe,stroke:#01579b
+    classDef intelligence fill:#f3e5f5,stroke:#4a148c
+    classDef application fill:#e8f5e8,stroke:#1b5e20
+    classDef sitebud fill:#fce4ec,stroke:#880e4f
+    classDef icpxml fill:#f1f8e9,stroke:#33691e
+    
+    class CACHE,QUEUE,ER,ET,AR,AC foundation
+    class SUIL,CHAR,PATTERNS,ROUTING,MATCHING,ALM,TASK,WORK,SAM intelligence
+    class EXT,BRIDGE,DASH,METRICS application
+    class STEM,GROVE,GARDEN,FRAMEWORK sitebud
+    class AIK,USF,PF,IP icpxml
     end
 ```
 

@@ -22,14 +22,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 🚀 Project Components
 
-### 1. AgentLedger (This Repo) - Cache/Queue System
-- **Purpose**: Distributed cache/queue system for Chrome extension sync
-- **Architecture**: 
-  - Main Cache Canister (`/backend/main.mo`): 6-node fault-tolerant cache
-  - Queue Canister (`/backend/queue.mo`): FIFO processing with retry logic
-  - Frontend (`/frontend/`): React/TypeScript with real-time monitoring
-- **Key Features**: Event router, orchestrator, agent registry (planned)
-- **Status**: Basic functionality working, transforming to ICPort kit
+### 1. AgentLedger (This Repo) - Universal Agent Coordination Platform
+- **Purpose**: Multi-kit platform for agent coordination with AgentLedgerMesh (ALM)
+- **Kit Architecture**: 
+  - **Foundation Layer**: Core infrastructure kits (cache+queue, events, registry)
+  - **Intelligence Layer**: SUIL + Character System, ALM coordination
+  - **Application Layer**: Chrome extension, web dashboard
+  - **Meta Kit**: Complete platform bundle for one-command deployment
+- **Key Features**: ALM mesh coordination, SUIL intelligence, character-driven agents
+- **Status**: Transforming to modular kit ecosystem
 
 ### 2. ICPXMLDB (Submodule) - AI Construction Kit
 - **Purpose**: Universal software construction platform
@@ -39,10 +40,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - PocketFlow TypeScript orchestration
 - **Location**: `icpxmldb/` submodule
 
-### 3. SiteBud (Submodule) - Web Meta-Layer
-- **Purpose**: Universal language tutor with extension-embedded server
-- **HTMZ Framework**: One-line DOM control
+### 3. SiteBud (Submodule) - Browser Extension Ecosystem
+- **Purpose**: Independent modular browser extension platform
+- **Kit Structure**: Core system, dev environment, marketplace, extensions
+- **HTMZ Framework**: One-line DOM control with AI-assisted development
 - **Location**: `sitebud/` submodule
+- **Status**: Designed as separate kit ecosystem (sitebud-core-kit, sitebud-dev-kit, etc.)
 
 ### 4. ICPort (Inside ICPXMLDB) - Docker for ICP
 - **Purpose**: Container orchestration for Internet Computer
@@ -65,7 +68,91 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **ICPortKit.yml**: Like docker-compose.yml, defines complete multi-service kit
 - **Recursive Building**: Kits can create other kits from blueprint templates
 - **Blueprint System**: Extract patterns from existing kits to create new ones
+- **Kit Granularity**: Organized by coupling (tightly coupled = bundled, loosely coupled = separate)
 - **Examples**: See `icpxmldb/icport/examples/basic-hello-world/` for proper syntax
+
+## 🏗️ AgentLedger Kit Architecture
+
+```mermaid
+graph TB
+    subgraph "Foundation Layer - Infrastructure"
+        ALCore["🗄️ agentledger-core-kit<br/>(Cache + Queue bundled)"]
+        ALEvents["📡 agentledger-events-kit<br/>(Event Router + pub-sub)"]
+        ALRegistry["📋 agentledger-registry-kit<br/>(Agent discovery + capabilities)"]
+    end
+    
+    subgraph "Intelligence Layer - Enhanced Processing"
+        ALSUIL["🧠 agentledger-suil-kit<br/>(SUIL + Character System)"]
+        ALMesh["🕸️ agentledger-mesh-kit<br/>(ALM coordination layer)"]
+    end
+    
+    subgraph "Application Layer - User Experience"
+        ALChrome["🌐 agentledger-chrome-kit<br/>(Browser integration)"]
+        ALDash["📊 agentledger-dashboard-kit<br/>(Web monitoring)"]
+    end
+    
+    subgraph "Meta Kit - Complete Platform"
+        ALPlatform["🚀 agentledger-platform-kit<br/>(Bundles all for one-command deploy)"]
+    end
+    
+    subgraph "SiteBud Ecosystem - Independent"
+        SBCore["🌱 sitebud-core-kit<br/>(Stem + module system)"]
+        SBDev["🌳 sitebud-dev-kit<br/>(Grove IDE + AI Pal)"]
+        SBMarket["🌻 sitebud-marketplace-kit<br/>(Garden + monetization)"]
+        SBExt["🌾 sitebud-extension-kit<br/>(Extension frameworks)"]
+    end
+    
+    ALPlatform --> ALCore
+    ALPlatform --> ALEvents
+    ALPlatform --> ALRegistry
+    ALPlatform --> ALSUIL
+    ALPlatform --> ALMesh
+    ALPlatform --> ALChrome
+    ALPlatform --> ALDash
+    
+    ALMesh --> ALCore
+    ALMesh --> ALEvents
+    ALSUIL --> ALRegistry
+    ALChrome --> ALCore
+    ALDash --> ALEvents
+    
+    classDef foundation fill:#e1f5fe
+    classDef intelligence fill:#f3e5f5
+    classDef application fill:#e8f5e8
+    classDef meta fill:#fff3e0
+    classDef sitebud fill:#fce4ec
+    
+    class ALCore,ALEvents,ALRegistry foundation
+    class ALSUIL,ALMesh intelligence
+    class ALChrome,ALDash application
+    class ALPlatform meta
+    class SBCore,SBDev,SBMarket,SBExt sitebud
+```
+
+### AgentLedgerMesh (ALM) vs Solace Agent Mesh (SAM)
+
+**Solace Agent Mesh (SAM)**: Enterprise event-driven architecture  
+**AgentLedgerMesh (ALM)**: ICP-native agent coordination with blockchain benefits
+
+```mermaid
+comparison
+    title ALM vs SAM Comparison
+    
+    "Infrastructure" : SAM : Complex K8s orchestration
+    "Infrastructure" : ALM : Single ICP deployment
+    
+    "Persistence" : SAM : Separate database systems
+    "Persistence" : ALM : Built-in blockchain storage
+    
+    "Scalability" : SAM : Manual scaling configuration
+    "Scalability" : ALM : Automatic canister scaling
+    
+    "Auditability" : SAM : Custom logging systems
+    "Auditability" : ALM : Immutable blockchain history
+    
+    "Global Access" : SAM : Regional deployments
+    "Global Access" : ALM : Worldwide ICP network
+```
 
 ## 🎬 Demo Flow (Tomorrow!)
 
@@ -103,39 +190,52 @@ npm run test:run-tests     # Playwright UI automation test
 
 ### Kit Development Commands
 ```bash
-# Transform AgentLedger to Kit
-cd icpxmldb/icport/kits/agentledger
+# Build Individual Kits
+cd icpxmldb/icport/kits/agentledger-core
 icport kit build .
-icport kit validate agentledger
+icport kit validate agentledger-core
+
+# Build Complete Platform Kit
+cd icpxmldb/icport/kits/agentledger-platform
+icport kit build .
+icport kit deploy agentledger-platform local
 
 # Test Universal Construction CLI
 cd icpxmldb/icport/kits/universal-construction-cli
 ./bin/universal-construct --help
 
-# Run Kit Builder Demo
+# Run Kit Builder Demo - Create IoT Kit from AgentLedger Blueprint
 cd icpxmldb/icport/kits/kit-builder
-./demo-recursive-kit-creation.sh
+icport kit-builder create iot-agent-kit \
+  --from-blueprint agentledger-v1 \
+  --domain "IoT Device Coordination" \
+  --character kyoko
+
+# Deploy SiteBud Ecosystem (Independent)
+cd icpxmldb/icport/kits/sitebud-core
+icport kit deploy sitebud-ecosystem local
 ```
 
 ## 🚨 Current Status & Tasks
 
 ### ✅ Completed
 - AgentLedger basic authentication working
-- Kit directory structure created (`icpxmldb/icport/kits/agentledger/`)
-- ICPortKit.yml and ICPortfile templates created
-- Architecture documents written
+- Kit architecture boundaries defined (Foundation/Intelligence/Application/Meta layers)
+- AgentLedgerMesh (ALM) distinguished from Solace Agent Mesh (SAM)
+- SiteBud positioned as independent kit ecosystem
+- Mermaid diagrams for kit dependencies and ALM vs SAM comparison
 
 ### 🚧 In Progress
-1. **Fix Frontend Signature Verification** - Chrome extension showing auth errors
-2. **Complete Kit Transformation** - Move AgentLedger code to kit structure
-3. **Test Universal Construction CLI** - Verify schema processing works
-4. **Prepare Kit Builder Demo** - Healthcare IoT from AgentLedger blueprint
+1. **Implement Kit Structure** - Create individual kit directories and manifests
+2. **Build Foundation Kits** - agentledger-core-kit (cache+queue), events-kit, registry-kit
+3. **Develop Intelligence Kits** - SUIL-kit with character system, ALM mesh-kit
+4. **Create Platform Meta-Kit** - Bundle all components for one-command deployment
 
 ### ⏳ Pending
-- Create unified dashboard showing all 4 projects
-- Set up SUIL performance visualization
-- Test character-driven kit building
-- Practice 5-minute pitch
+- Implement SiteBud kit ecosystem (core, dev, marketplace, extension kits)
+- Test recursive kit building (AgentLedger → IoT Agent Kit)
+- Set up SUIL performance visualization with character switching
+- Create unified dashboard showing kit deployment status
 
 ## 💡 Key Implementation Details
 
@@ -180,6 +280,6 @@ cd icpxmldb/icport/kits/kit-builder
 
 ---
 
-**Last Updated**: January 21, 2025  
-**Hackathon Deadline**: Demo tomorrow!  
-**Current Focus**: Transform AgentLedger into deployable ICPort kit with SUIL integration
+**Last Updated**: January 26, 2025  
+**Current Focus**: Multi-kit architecture with AgentLedgerMesh (ALM) and independent SiteBud ecosystem  
+**Architecture Status**: Kit boundaries defined, ready for modular implementation
