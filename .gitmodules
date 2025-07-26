@@ -1,0 +1,6 @@
+[submodule "icpxmldb"]
+	path = icpxmldb
+	url = git@github.com:bigale/icpxmldb.git
+[submodule "sitebud"]
+	path = sitebud
+	url = git@github.com:bigale/sitebud.git
