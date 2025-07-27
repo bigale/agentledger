@@ -47,7 +47,19 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(git fetch:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(./icpxmldb/icport/kits/validate-foundation-kits.sh:*)",
+      "Bash(python:*)",
+      "Bash(dfx:*)",
+      "Bash(./pocketflow-blueprint-analyzer.js ../../ai-kit/lib/pocketflow-py/cookbook/pocketflow-chat ./blueprint-templates/ --character kyoko --targets icp,sitebud)",
+      "Bash(./pocketflow-blueprint-analyzer.js:*)",
+      "Bash(./dual-target-kit-generator.js ./blueprint-templates/pocketflow-chat-dual-v1.json ./generated-kits/ pocketflow-chat-sitebud-kit)",
+      "Bash(./dual-target-kit-generator.js ./blueprint-templates/pocketflow-rag-dual-v1.json ./generated-kits/ pocketflow-rag-chihiro-kit)",
+      "Bash(PYTHONPATH=/home/bigale/repos/agentledger/icpxmldb/icport/kits/kit-builder/generated-kits/pocketflow-rag-kit/shared/mocks python3 src/python/main.py --How does PFAS remediation work?)",
+      "Bash(PYTHONPATH=../../../shared/mocks python3 main.py --How does PFAS remediation work?)",
+      "Bash(./demo-full-pipeline.sh:*)",
+      "Bash(./demo-quick.sh:*)",
+      "Bash(convert:*)"
     ],
     "deny": []
   }
